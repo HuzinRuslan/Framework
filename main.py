@@ -5,7 +5,7 @@ urls = {
     '/': views.main_view,
     '/about/': views.about_view,
     '/authors/': views.Authors(),
-    '/contact/': views.contact_view
+    '/contact/': views.contact_view,
 }
 
 
