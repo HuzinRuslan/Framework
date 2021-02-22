@@ -1,3 +1,6 @@
+import quopri
+
+
 class Application:
 
     def __init__(self, urls: dict, front_controllers: list):
@@ -76,3 +79,9 @@ class Application:
                 k, v = item.split('=')
                 result[k] = v
         return result
+
+    @staticmethod
+    def decode_value(val):
+        val_b = bytes(val.replace('%', '=').replace("+", " "), 'UTF-8')
+        val_decode_str = quopri.decodestring(val_b)
+        return val_decode_str.decode('UTF-8')

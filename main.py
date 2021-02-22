@@ -6,6 +6,10 @@ urls = {
     '/about/': views.about_view,
     '/authors/': views.Authors(),
     '/contact/': views.contact_view,
+    '/create-course/': views.create_course,
+    '/create-category/': views.create_category,
+    '/course-list/': views.course_list,
+    '/category-list/': views.category_list,
 }
 
 
