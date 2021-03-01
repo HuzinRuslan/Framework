@@ -1,6 +1,7 @@
 from MyFramework import render, Application, DebugApplication, FakeApplication
-from models import TrainingSite
+from models import TrainingSite, BaseSerializer
 from logging_mod import Logger, debug
+from MyFramework.classViews import ListView, CreateView
 
 site = TrainingSite()
 logger = Logger('main')
@@ -31,17 +32,70 @@ def contact_view(request):
         return '200 OK', render('contact.html')
 
 
-class Authors:
+class CategoryCreateView(CreateView):
+    template_name = 'create_category.html'
 
-    def __call__(self, request):
-        return '200 OK', render('authors.html', object_list=[{'name': 'Leo'}, {'name': 'Kate'}])
+    def get_context_data(self):
+        context = super().get_context_data()
+        context['categories'] = site.categories
+        return context
+
+    def create_obj(self, data):
+        name = data['name']
+        name = Application.decode_value(name)
+
+        new_category = site.create_category(name)
+        site.categories.append(new_category)
+
+
+class CategoryListView(ListView):
+    queryset = site.categories
+    template_name = 'category_list.html'
+
+
+class StudentListView(ListView):
+    queryset = site.students
+    template_name = 'student_list.html'
+
+
+class StudentCreateView(CreateView):
+    template_name = 'create_student.html'
+
+    def create_obj(self, data):
+        name = data['name']
+        name = Application.decode_value(name)
+        new_obj = site.create_user('student', name)
+        site.students.append(new_obj)
+
+
+class AddStudentCreateView(CreateView):
+    template_name = 'add_student.html'
+
+    def get_context_data(self):
+        context = super().get_context_data()
+        context['courses'] = site.courses
+        context['students'] = site.students
+        return context
+
+    def create_obj(self, data):
+        course_name = data['course_name']
+        course_name = Application.decode_value(course_name)
+        course = site.get_course(course_name)
+        student_name = data['student_name']
+        student_name = Application.decode_value(student_name)
+        student = site.get_student(student_name)
+        course.add_student(student)
 
 
 urls = {
     '/': main_view,
     '/about/': about_view,
-    '/authors/': Authors(),
     '/contact/': contact_view,
+    '/create-category/': CategoryCreateView(),
+    '/category-list/': CategoryListView(),
+    '/student-list/': StudentListView(),
+    '/create-student/': StudentCreateView(),
+    '/add-student/': AddStudentCreateView(),
 }
 
 
@@ -56,6 +110,7 @@ front_controllers = [
 
 application = Application(urls, front_controllers)
 
+
 # application = DebugApplication(urls, front_controllers)
 # application = FakeApplication(urls, front_controllers)
 
@@ -65,6 +120,8 @@ def create_course(request):
         # метод пост
         data = request['data']
         name = data['name']
+        name = Application.decode_value(name)
+
         category_id = data.get('category_id')
 
         if category_id:
@@ -81,35 +138,14 @@ def create_course(request):
         return '200 OK', render('create_course.html', categories=categories)
 
 
-@application.add_route('/create-category/')
-def create_category(request):
-    if request['method'] == 'POST':
-        # метод пост
-        data = request['data']
-        name = data['name']
-
-        name = Application.decode_value(name)
-
-        new_category = site.create_category(name)
-
-        site.categories.append(new_category)
-        # редирект?
-        # return '302 Moved Temporarily', render('create_course.html')
-        # Для начала можно без него
-        return '200 OK', render('create_category.html')
-    else:
-        categories = site.categories
-        return '200 OK', render('create_category.html', categories=categories)
-
-
 @application.add_route('/course-list/')
 def course_list(request):
     request_params = request['request_params']
 
     name = request_params['name']
+    name = Application.decode_value(name)
 
     old_course = site.get_course(name)
-
     if old_course:
         new_name = f'copy_{name}'
         new_course = old_course.clone()
@@ -119,7 +155,6 @@ def course_list(request):
     return '200 OK', render('course_list.html', objects_list=site.courses)
 
 
-@application.add_route('/category-list/')
-def category_list(request):
-    logger.log('Список категорий')
-    return '200 OK', render('category_list.html', objects_list=site.categories)
+@application.add_route('/api/')
+def course_api(request):
+    return '200 OK', BaseSerializer(site.courses).save()
