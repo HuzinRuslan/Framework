@@ -1,6 +1,7 @@
+import jsonpickle
 from reusepatterns.prototypes import PrototypeMixin
 from reusepatterns.observer import Subject, Observer
-import jsonpickle
+from MyORM import DomainObject
 
 
 # абстрактный пользователь
@@ -16,7 +17,7 @@ class Teacher(User):
 
 
 # студент
-class Student(User):
+class Student(User, DomainObject):
 
     def __init__(self, name):
         self.courses = []
